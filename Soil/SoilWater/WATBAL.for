@@ -119,6 +119,15 @@ C=======================================================================
 
 !     Weather variables
       REAL RAIN, TMAX
+      
+C-KRT Variables to read observed soil water content data
+      CHARACTER*12 SWCFILE
+      INTEGER ERR, I
+      CHARACTER*6  ERRKEY
+      PARAMETER (ERRKEY = 'WATBAL')
+      INTEGER, DIMENSION(25) :: obsSWCdoy
+      REAL, DIMENSION(25,10) :: obsSWC
+C-KRT End Edits
 
 !-----------------------------------------------------------------------
 !     Transfer values from constructed data types into local variables.
@@ -165,6 +174,28 @@ C=======================================================================
 
       SNOW = 0.0
       CALL PUT('WATER','SNOW'  , SNOW)
+      
+C-KRT Read measured soil water content data for assimilation
+      WRITE(SWCFILE,"(A6,I2.2,A4)") "obsSWC",CONTROL%TRTNUM,".txt"
+      OPEN (1976, FILE = SWCFILE, STATUS = 'OLD', IOSTAT=ERR)
+      IF (ERR .NE. 0) CALL ERROR(ERRKEY,ERR,1976,0)
+      obsSWCdoy = 0.0
+      obsSWC = 0.0
+      I = 1
+      DO
+          READ(1976,'(I7,10(1X,F5.3))',IOSTAT=ERR) obsSWCdoy(I),
+     &       obsSWC(I,1), obsSWC(I,2), obsSWC(I,3), obsSWC(I,4),
+     &       obsSWC(I,5), obsSWC(I,6), obsSWC(I,7), obsSWC(I,8),
+     &       obsSWC(I,9), obsSWC(I,10)
+          I = I + 1
+          IF (ERR.LT.0.0) EXIT
+      END DO
+C      DO I = 1,25
+C          PRINT('(I7,10(1X,F5.3))'), obsSWCdoy(I),
+C     &    obsSWC(I,1), obsSWC(I,2), obsSWC(I,3), obsSWC(I,4), obsSWC(I,5),
+C     &    obsSWC(I,6), obsSWC(I,7), obsSWC(I,8), obsSWC(I,9), obsSWC(I,10)
+C      END DO
+C-KRT End edits
 
 !***********************************************************************
 !***********************************************************************
@@ -467,6 +498,17 @@ C       extraction (based on yesterday's values) for each soil layer.
 
 !       CALL SUMSW(NLAYR, DLAYR, SW, SWTOT2)
 !       DIFFSW = SWTOT2 - SWTOT1
+
+
+C-KRT Assimilation of measured soil water content data.
+      DO I = 1, 25
+          IF (obsSWCdoy(I).EQ.YRDOY) THEN
+              DO L = 1, NLAYR
+                  SW(L) = obsSWC(I,L)
+              END DO
+          END IF
+      END DO
+C-KRT End edits
 
 !       Perform daily summation of water balance variables.
         CALL WBSUM(INTEGR,
