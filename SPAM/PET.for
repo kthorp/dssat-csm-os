@@ -276,6 +276,9 @@ C=======================================================================
       REFET =0.408*UDELTA*(RN-G)+PSYCON*(Cn/(TAVG+273.0))*WIND2m*(ES-EA)
       REFET = REFET/(UDELTA+PSYCON*(1.0+Cd*WIND2m)) !mm/d
       REFET = MAX(0.0001, REFET)
+C-KRT AgMIP Wheat sensitivity analysis
+      REFET = REFET + 0.20 * REFET
+C-KRT End Edits
 
 !     FAO-56 dual crop coefficient approach
 !     First step is to obtain crop coefficient parameters.
@@ -341,8 +344,11 @@ C=======================================================================
 
       !Potential evapotranspiration (FAO-56 Eq. 69)
       EO = (KCB + KE) * REFET
-      
+
       EO = MAX(EO,0.0001)
+C-KRT AgMIP Wheat sensitivity analysis
+      EO = EO + 0.20 * EO
+C-KRT End Edits
       
       CALL PUT('SPAM', 'REFET', REFET)
       CALL PUT('SPAM', 'KCB', KCB)
@@ -550,11 +556,18 @@ C     !Converts MJ/m2/d to mm/d
 C   KJB LATER, NEED TO PUT VARIABLE IN PLACE OF 1.1
 !      KC=1.0+(1.1-1.0)*XHLAI/6.0
       KC=1.0+(EORATIO-1.0)*XHLAI/6.0
+C-KRT AgMIP Wheat sensitivity analysis
+      ET0 = ET0 + 0.20 * ET0
+C-KRT End Edits
+      
       EO=ET0*KC
 C     EO=ET0
         EO = MAX(EO,0.0)
 !###  EO = MAX(EO,0.0)   !gives error in DECRAT_C
       EO = MAX(EO,0.0001)
+C-KRT AgMIP Wheat sensitivity analysis
+      EO = EO + 0.20 * EO
+C-KRT End Edits
 
 !-----------------------------------------------------------------------
       RETURN
@@ -876,6 +889,9 @@ C=======================================================================
 
 !###  EO = MAX(EO,0.0)   !gives error in DECRAT_C
       EO = MAX(EO,0.0001)
+C-KRT AgMIP Wheat sensitivity analysis
+      EO = EO + 0.20 * EO
+C-KRT End Edits
 
 !-----------------------------------------------------------------------
       RETURN
