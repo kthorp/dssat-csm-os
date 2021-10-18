@@ -62,6 +62,7 @@
       USE ModuleDefs
       USE WH_module
       implicit none
+      SAVE
       !*! include 'nwheats.inc'             ! CERES_Wheat Common Block
       !*! include 'data.pub'                          
       !*! include 'error.pub'                         
@@ -171,6 +172,7 @@
 *     ===========================================================
       USE WH_module
       implicit none
+      SAVE
 !*!      include 'nwheats.inc'             ! CERES_Wheat Common Block
 !*!      include 'data.pub'                          
 !*!      include 'error.pub'                         
@@ -268,6 +270,7 @@ cnh to allow watching of these variables
       USE ModuleDefs
       USE WH_module
       implicit none
+      SAVE
       !*! include 'nwheats.inc'             ! CERES_Wheat Common Block
       !*! include 'data.pub'                          
       !*! include 'error.pub'                         
@@ -451,6 +454,7 @@ cnh added for watch purposes
 *     ===========================================================
       USE ModuleDefs
       implicit none
+      SAVE
       !*! include 'const.inc'              ! err_user
       !*! include 'nwheats.inc'             ! CERES_Wheat Common Block
       !*! include 'data.pub'                          
@@ -522,6 +526,7 @@ cnh added for watch purposes
 *     ===========================================================
       USE WH_module
       implicit none
+      SAVE
       !*! include 'nwheats.inc'             ! CERES_Wheat Common Block
       !*! include 'data.pub'                          
       !*! include 'error.pub'                         
@@ -667,6 +672,7 @@ cjh  end of correction
       USE ModuleDefs
       USE WH_module
       implicit none
+      SAVE
       !*! include 'convert.inc'            ! gm2kg, sm2ha
       !*! include 'nwheats.inc'             ! CERES_Wheat Common Block
       !*! include 'data.pub'                          
@@ -942,6 +948,7 @@ cjh  end of correction
 * ====================================================================
       USE ModuleDefs
       implicit none
+      SAVE
       !*! include 'convert.inc'            ! gm2kg, sm2ha
       !*! include 'nwheats.inc'             ! CERES_Wheat Common Block
       !*! include 'data.pub'                          
@@ -1191,6 +1198,7 @@ cnh         avail_nh4(layer) = rlength * fnh4 * smdfr**2 * potrate*gm2kg
       USE ModuleDefs  ! JG added for ecotype file
       USE WH_module
       implicit none
+      SAVE
       !*! include 'nwheats.inc'             ! CERES_Wheat Common Block
       !*! include 'data.pub'                          
       !*! include 'error.pub'                         
