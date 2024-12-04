@@ -44,8 +44,9 @@ C=======================================================================
      &      EORATIO, !Needed by Penman-Monteith
      &      CANHT,   !Needed by dynamic Penman-Monteith
      &      EO,      !Output
-     &      ET0)     !Output hourly Priestly-Taylor with VPD effect
-
+     &      ET0,     !Output hourly Priestly-Taylor with VPD effect
+     &      REFETADJ, PETADJ) !C-KRT ET adjustments
+     
       USE ModuleDefs
       IMPLICIT NONE
       SAVE
@@ -58,6 +59,8 @@ C=======================================================================
       REAL TDEW, TMAX, TMIN, VAPR, WINDHT, WINDSP, XHLAI
       REAL WINDRUN, XLAT, XELEV
       REAL, DIMENSION(TS)    ::RADHR, TAIRHR, ET0
+      REAL REFETADJ, PETADJ !C-KRT ET adjustments
+      
       
       CLOUDS = WEATHER % CLOUDS
       SRAD   = WEATHER % SRAD  
@@ -85,7 +88,7 @@ C=======================================================================
             CALL PETPEN(
      &        CLOUDS, EORATIO, ET_ALB, SRAD, TAVG, TDEW,  !Input
      &        TMAX, TMIN, VAPR, WINDSP, WINDHT, XHLAI,    !Input
-     &        EO)                                         !Output
+     &        EO,REFETADJ, PETADJ) !C-KRT ET adjustments  !Output
 !         ------------------------
           !ASCE Standardized Reference Evapotranspiration Equation
           !for the short reference crop (12-cm grass, "S") or the
@@ -96,7 +99,7 @@ C=======================================================================
      &        CANHT, DOY, ET_ALB, MEEVP, SRAD, TDEW,      !Input 
      &        TMAX, TMIN, WINDHT, WINDRUN, XHLAI,         !Input
      &        XLAT, XELEV,                                !Input
-     &        EO)                                         !Output
+     &        EO,REFETADJ, PETADJ) !C-KRT ET adjustments  !Output
 !         ------------------------
           !Dynamic Penman-Monteith, pot. evapotranspiration, with
 !             dynamic input of LAI, crop height effects on Ra and Rs
@@ -104,7 +107,7 @@ C=======================================================================
             CALL PETDYN(
      &        CANHT, CLOUDS, ET_ALB, SRAD, TAVG, TDEW,    !Input
      &        TMAX, TMIN, WINDSP, XHLAI,                  !Input
-     &        EO)                                         !Output
+     &        EO) !C-KRT ET adjustments                   !Output
 !         ------------------------
           !FAO Penman (FAO-24) potential evapotranspiration
           CASE ('P')
@@ -134,7 +137,7 @@ C=======================================================================
           CASE DEFAULT !Default - MEEVP = 'R' 
             CALL PETPT(
      &        ET_ALB, SRAD, TMAX, TMIN, XHLAI,          !Input
-     &        EO)                                       !Output
+     &        EO, PETADJ) !C-KRT ET adjustments         !Output
 !         ------------------------
       END SELECT
 
@@ -170,7 +173,7 @@ C=======================================================================
      &        CANHT, DOY, MSALB, MEEVP, SRAD, TDEW,       !Input 
      &        TMAX, TMIN, WINDHT, WINDRUN, XHLAI,         !Input
      &        XLAT, XELEV,                                !Input
-     &        EO)                                         !Output
+     &        EO,REFETADJ, PETADJ) !C-KRT ET adjustments  !Output
 !-----------------------------------------------------------------------
       USE ModuleDefs
       USE ModuleData
@@ -193,6 +196,7 @@ C=======================================================================
       REAL WND, CHT
       REAL REFET, SKC, KCBMIN, KCBMAX, KCB, KE, KC
       CHARACTER*78 MSG(2)
+      REAL REFETADJ, PETADJ !C-KRT ET adjustments
 !-----------------------------------------------------------------------
 
 !     ASCE Standardized Reference Evapotranspiration 
@@ -277,7 +281,8 @@ C=======================================================================
       REFET = REFET/(UDELTA+PSYCON*(1.0+Cd*WIND2m)) !mm/d
       REFET = MAX(0.0001, REFET)
 C-KRT AgMIP Wheat sensitivity analysis
-      REFET = REFET + 0.20 * REFET
+C-KRT      PRINT *, REFETADJ
+      REFET = REFET + REFETADJ * REFET !Reference ET adjustment
 C-KRT End Edits
 
 !     FAO-56 dual crop coefficient approach
@@ -347,7 +352,8 @@ C-KRT End Edits
 
       EO = MAX(EO,0.0001)
 C-KRT AgMIP Wheat sensitivity analysis
-      EO = EO + 0.20 * EO
+C-KRT      PRINT *, PETADJ
+      EO = EO + PETADJ * EO !Potential ET
 C-KRT End Edits
       
       CALL PUT('SPAM', 'REFET', REFET)
@@ -396,7 +402,7 @@ C=======================================================================
       SUBROUTINE PETPEN(
      &    CLOUDS, EORATIO, MSALB, SRAD, TAVG, TDEW,       !Input
      &    TMAX, TMIN, VAPR, WINDSP, WINDHT, XHLAI,        !Input
-     &    EO)                                             !Output
+     &    EO, REFETADJ, PETADJ) !C-KRT ET adjustments     !Output
 !-----------------------------------------------------------------------
       IMPLICIT NONE
       SAVE
@@ -427,6 +433,7 @@ C     PARAMETER (SHAIR = 1005.0)
 !-----------------------------------------------------------------------
 !     FUNCTION SUBROUTINES:
       REAL VPSLOP, VPSAT      !Found in file HMET.for
+      REAL REFETADJ, PETADJ !C-KRT ET adjustments
 
 C-----------------------------------------------------------------------
 C     Compute air properties.
@@ -557,7 +564,8 @@ C   KJB LATER, NEED TO PUT VARIABLE IN PLACE OF 1.1
 !      KC=1.0+(1.1-1.0)*XHLAI/6.0
       KC=1.0+(EORATIO-1.0)*XHLAI/6.0
 C-KRT AgMIP Wheat sensitivity analysis
-      ET0 = ET0 + 0.20 * ET0
+C-KRT      PRINT *, REFETADJ
+      ET0 = ET0 + REFETADJ * ET0 !Reference ET
 C-KRT End Edits
       
       EO=ET0*KC
@@ -566,7 +574,8 @@ C     EO=ET0
 !###  EO = MAX(EO,0.0)   !gives error in DECRAT_C
       EO = MAX(EO,0.0001)
 C-KRT AgMIP Wheat sensitivity analysis
-      EO = EO + 0.20 * EO
+C-KRT      PRINT *, PETADJ
+      EO = EO + PETADJ * EO !Potential ET
 C-KRT End Edits
 
 !-----------------------------------------------------------------------
@@ -847,7 +856,7 @@ C  09/01/1999 GH  Incorporated into CROPGRO
 C=======================================================================
       SUBROUTINE PETPT(
      &    MSALB, SRAD, TMAX, TMIN, XHLAI,                 !Input
-     &    EO)                                             !Output
+     &    EO, PETADJ) !C-KRT ET adjustments               !Output
 
 !-----------------------------------------------------------------------
       IMPLICIT NONE
@@ -861,6 +870,7 @@ C=======================================================================
 !-----------------------------------------------------------------------
 !     LOCAL VARIABLES:
       REAL ALBEDO, EEQ, SLANG, TD
+      REAL PETADJ !C-KRT ET adjustments
 
 !-----------------------------------------------------------------------
 !     Should use TAVG here -- we have it from WEATHER variable!
@@ -890,7 +900,8 @@ C=======================================================================
 !###  EO = MAX(EO,0.0)   !gives error in DECRAT_C
       EO = MAX(EO,0.0001)
 C-KRT AgMIP Wheat sensitivity analysis
-      EO = EO + 0.20 * EO
+C-KRT      PRINT *, PETADJ
+      EO = EO + PETADJ * EO !Potential ET
 C-KRT End Edits
 
 !-----------------------------------------------------------------------
@@ -1423,7 +1434,7 @@ C=======================================================================
 !  Output: PE
 !=======================================================================
 
-      SUBROUTINE PSE(EO, KSEVAP, XLAI, EOS) 
+      SUBROUTINE PSE(EO, KSEVAP, XLAI, EOS, EOSADJ) !C-KRT ET adjustments
 
 !-----------------------------------------------------------------------
       USE ModuleDefs
@@ -1435,6 +1446,7 @@ C=======================================================================
       REAL EO, XLAI, EOS
       REAL KSEVAP
       REAL KE, REFET
+      REAL EOSADJ !C-KRT ET adjustments
       
       CALL GET('SPAM', 'KE', KE)
       CALL GET('SPAM', 'REFET', REFET)
@@ -1469,6 +1481,11 @@ C=======================================================================
 !     Probably should use KEP here.
 
       EOS = MAX(EOS,0.0)
+      
+C-KRT AgMIP Wheat sensitivity analysis
+C-KRT      PRINT *, EOSADJ
+      EOS = EOS + EOSADJ * EOS !Potential Soil E
+C-KRT End Edits
 
       RETURN
       END SUBROUTINE PSE

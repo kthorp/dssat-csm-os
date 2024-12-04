@@ -84,6 +84,12 @@ C=======================================================================
       REAL PSTRES1
 !     Hourly transpiration for MEEVP=H      
       REAL, DIMENSION(TS)    :: ET0
+      
+C-KRT ET adjustment initializations
+      CHARACTER*12 ETFILE
+      INTEGER      ETLUN
+      REAL         REFETADJ, PETADJ, EOSADJ
+C-KRT
 
 !-----------------------------------------------------------------------
 !     Define constructed variable types based on definitions in
@@ -125,8 +131,8 @@ C=======================================================================
       TMAX   = WEATHER % TMAX  
       TMIN   = WEATHER % TMIN  
       WINDSP = WEATHER % WINDSP
-      XLAT   = WEATHER % XLAT  
-
+      XLAT   = WEATHER % XLAT
+      
 !***********************************************************************
 !***********************************************************************
 !     Run Initialization - Called once per simulation
@@ -145,6 +151,16 @@ C=======================================================================
       CALL PUT('SPAM', 'KCB', -99.0)
       CALL PUT('SPAM', 'KE', -99.0)
       CALL PUT('SPAM', 'KC', -99.0)
+      
+C-KRT Read input file for ET adjustments
+      ETFILE = 'ETADJUST.INP'  !Data assimilation parameter file
+      CALL GETLUN('ETADJUST', ETLUN)
+      OPEN (UNIT = ETLUN, FILE = ETFILE, STATUS = 'OLD',
+     &      ACTION = 'READ')
+      READ(ETLUN, "(F4.2)") REFETADJ !Reference ET adjustment
+      READ(ETLUN, "(F4.2)") PETADJ   !Potential ET adjustment
+      READ(ETLUN, "(F4.2)") EOSADJ   !Potential E adjustment
+C-KRT
 
 !***********************************************************************
 !***********************************************************************
@@ -305,7 +321,8 @@ C       and total potential water uptake rate.
      &       EORATIO, !Needed by Penman-Monteith
      &       CANHT,   !Needed by dynamic Penman-Monteith
      &       EO,      !Output
-     &       ET0)     !Output hourly Priestly-Taylor with VPD effect
+     &       ET0,     !Output hourly Priestly-Taylor with VPD effect
+     &       REFETADJ, PETADJ) !C-KRT ET adjustments
 
 !-----------------------------------------------------------------------
 !         POTENTIAL SOIL EVAPORATION
@@ -314,7 +331,7 @@ C       and total potential water uptake rate.
 !         This was important for Canegro and affects CROPGRO crops
 !             only very slightly (max 0.5% yield diff for one peanut
 !             experiment).  No difference to other crop models.
-          CALL PSE(EO, KSEVAP, XLAI, EOS)
+          CALL PSE(EO, KSEVAP, XLAI, EOS, EOSADJ) !C-KRT ET adjustments
 
 !-----------------------------------------------------------------------
 !         ACTUAL SOIL, MULCH AND FLOOD EVAPORATION
