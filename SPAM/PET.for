@@ -404,6 +404,10 @@ C=======================================================================
      &    TMAX, TMIN, VAPR, WINDSP, WINDHT, XHLAI,        !Input
      &    EO, REFETADJ, PETADJ) !C-KRT ET adjustments     !Output
 !-----------------------------------------------------------------------
+C-KRT Added to write out reference ET
+      USE ModuleDefs
+      USE ModuleData
+C-KRT End edits
       IMPLICIT NONE
       SAVE
 !-----------------------------------------------------------------------
@@ -566,6 +570,7 @@ C   KJB LATER, NEED TO PUT VARIABLE IN PLACE OF 1.1
 C-KRT AgMIP Wheat sensitivity analysis
 C-KRT      PRINT *, REFETADJ
       ET0 = ET0 + REFETADJ * ET0 !Reference ET
+      CALL PUT('SPAM', 'REFET', ET0)
 C-KRT End Edits
       
       EO=ET0*KC
